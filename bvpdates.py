@@ -1,24 +1,6 @@
 import networkx as nx
 import csv
 
-# names = [
-#     "Sam",
-#     "Riki",
-#     "Ohi",
-#     "Joe",
-#     "Bob"
-#     ]
-
-# previous_pairings = [
-#         ("Sam", "Joe", 1),
-#         ("Ohi", "Riki", 1),
-#         ("Sam", "Riki", 2),
-#         ("Joe", "Ohi", 2),
-#         ("Ohi", "Sam", 3),
-#         ("Bob", "Riki", 3)
-#         ]
-
-
 
 def get_names_and_pairings():
     """Generate a tuple of names and previous pairings from CSV
@@ -38,6 +20,7 @@ def get_names_and_pairings():
     """
     previous_pairings = {}
     names = []
+    max_week = 0
 
     seen_names = {} #dict to validate the dataset to keep track of names we saw
 
@@ -55,6 +38,9 @@ def get_names_and_pairings():
                 # skip, if it's the name key
                 if not week == 'Name':
                     week_number = int(week)
+                    if week_number > max_week:
+                        max_week = week_number
+
                     ordered_names = order_pair(name, pairing_name)
 
                     if not pairing_name in names:
@@ -66,25 +52,16 @@ def get_names_and_pairings():
     for name in names:
         del seen_names[name]
 
-    if len(seen_names) > 0:
+    # we'll have 1 'unmatched' with the empty (missing) case if we're missing any
+    # historical data, so ignore it 
+    if len(seen_names) > 0 and not '' in seen_names:
         print('We found names that were not matched with labels. ',
               'Please validate your dataset!')
-        print('Names found were: ', seen_names.items())
+        print('Names found were: ', seen_names)
 
-    return (names, previous_pairings)
-
-
+    return (names, previous_pairings, max_week)
 
 
-def create_pairing_edges(max_week):
-    matchings = dict()
-    for (n1, n2, week) in previous_pairings:
-        weight = (max_week - week) ** 2
-        # ensure ordering is respected to access later
-        ordered_names = order_pair(n1, n2)
-        matchings[ordered_names] = weight
-
-    return matchings
 
 def order_pair(a, b):
     if (a < b):
@@ -94,15 +71,9 @@ def order_pair(a, b):
 
 
 def main():
-    (names, previous_pairings) = get_names_and_pairings()
+    (names, previous_pairings, max_week) = get_names_and_pairings()
 
     G = nx.Graph();
-
-    max_week = max(map(lambda t: t[2], previous_pairings)) + 1
-    print(max_week)
-
-    pair_map = create_pairing_edges(max_week)
-
 
     names_lenth = len(names);
     unmatched_edge_weight = names_lenth * (names_lenth - 1)
@@ -111,13 +82,18 @@ def main():
         for name2 in names:
             if not name1 == name2:
                 (n1, n2) = order_pair(name1, name2)
-                if ((n1, n2) in pair_map):
-                    G.add_edge(n1, n2, weight=pair_map[(n1, n2)])
+                if ((n1, n2) in previous_pairings):
+                    adjusted_weight = (max_week - previous_pairings[(n1, n2)]) ** 2
+                    G.add_edge(n1, n2, weight=adjusted_weight)
                 else:
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
 
-    print(nx.algorithms.max_weight_matching(G, True))
+    greatest_matching = nx.algorithms.max_weight_matching(G, True)
+
+    print('You should pair these people together this week:')
+    for (name1, name2) in greatest_matching:
+        print(name1 + ', ' + name2)
 
 
 
