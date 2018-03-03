@@ -5,11 +5,16 @@ names = [
     "Riki",
     "Ohi",
     "Joe",
+    "Bob"
     ]
 
 previous_pairings = [
         ("Sam", "Joe", 1),
-        ("Ohi", "Riki", 1)
+        ("Ohi", "Riki", 1),
+        ("Sam", "Riki", 2),
+        ("Joe", "Ohi", 2),
+        ("Ohi", "Sam", 3),
+        ("Bob", "Riki", 3)
         ]
 
 def create_pairing_edges(max_week):
@@ -19,7 +24,6 @@ def create_pairing_edges(max_week):
         # ensure ordering is respected to access later
         ordered_names = order_pair(n1, n2)
         matchings[ordered_names] = weight
-
 
     return matchings
 
@@ -51,7 +55,6 @@ def main():
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
 
-    # print(G.adj)
     print(nx.algorithms.max_weight_matching(G, True))
 
 
