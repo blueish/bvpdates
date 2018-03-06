@@ -24,10 +24,9 @@ def get_names_and_pairings():
 
     seen_names = {} #dict to validate the dataset to keep track of names we saw
 
-    with open('test1.csv') as f:
-        reader = csv.DictReader(f, delimiter='\t')
+    with open('test4.csv') as f:
+        reader = csv.DictReader(f, delimiter=',')
         for row in reader:
-            print(row)
             name = row['Name']
             name = name.strip().replace(' ', '').lower()
             names.append(name)
@@ -43,11 +42,10 @@ def get_names_and_pairings():
                         max_week = week_number
 
                     ordered_names = order_pair(name, pairing_name)
+                    previous_pairings[ordered_names] = week_number
 
                     if not pairing_name in names:
                         seen_names[pairing_name] = week_number
-
-                    previous_pairings[ordered_names] = week_number
 
     # validate the names:
     for name in names:
@@ -73,11 +71,6 @@ def order_pair(a, b):
 
 def main():
     (names, previous_pairings, max_week) = get_names_and_pairings()
-    print('names: \n\n\n\n\n\n')
-    print(names)
-
-    print('previous_pairings: \n\n\n\n\n\n')
-    print(previous_pairings)
 
     G = nx.Graph();
 
@@ -89,19 +82,16 @@ def main():
             if not name1 == name2:
                 (n1, n2) = order_pair(name1, name2)
                 if ((n1, n2) in previous_pairings):
-                    # print(n1 + ' '+  n2 + 'was in prev')
                     adjusted_weight = (max_week - previous_pairings[(n1, n2)]) ** 2
                     G.add_edge(n1, n2, weight=adjusted_weight)
                 else:
-                    # print(n1 + ' '+  n2 + 'not in prev')
-                    # print('not in prev')
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
 
     greatest_matching = nx.algorithms.max_weight_matching(G, True)
 
     if (True):
-        print('You should pair these people together this week:')
+        print('Respective weights: (if not all same, some suboptimal matches')
         for (name1, name2) in greatest_matching:
             print(G[name1][name2])
 
