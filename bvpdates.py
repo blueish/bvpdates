@@ -24,9 +24,10 @@ def get_names_and_pairings():
 
     seen_names = {} #dict to validate the dataset to keep track of names we saw
 
-    with open('BVP Dates.csv') as f:
+    with open('test1.csv') as f:
         reader = csv.DictReader(f, delimiter='\t')
         for row in reader:
+            print(row)
             name = row['Name']
             name = name.strip().replace(' ', '').lower()
             names.append(name)
@@ -36,7 +37,7 @@ def get_names_and_pairings():
                 pairing_name = pairing_name.strip().replace(' ', '').lower()
 
                 # skip, if it's the name key
-                if not week == 'Name':
+                if week != '' and not week == 'Name':
                     week_number = int(week)
                     if week_number > max_week:
                         max_week = week_number
@@ -72,6 +73,11 @@ def order_pair(a, b):
 
 def main():
     (names, previous_pairings, max_week) = get_names_and_pairings()
+    print('names: \n\n\n\n\n\n')
+    print(names)
+
+    print('previous_pairings: \n\n\n\n\n\n')
+    print(previous_pairings)
 
     G = nx.Graph();
 
@@ -83,13 +89,21 @@ def main():
             if not name1 == name2:
                 (n1, n2) = order_pair(name1, name2)
                 if ((n1, n2) in previous_pairings):
+                    # print(n1 + ' '+  n2 + 'was in prev')
                     adjusted_weight = (max_week - previous_pairings[(n1, n2)]) ** 2
                     G.add_edge(n1, n2, weight=adjusted_weight)
                 else:
+                    # print(n1 + ' '+  n2 + 'not in prev')
+                    # print('not in prev')
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
 
     greatest_matching = nx.algorithms.max_weight_matching(G, True)
+
+    if (True):
+        print('You should pair these people together this week:')
+        for (name1, name2) in greatest_matching:
+            print(G[name1][name2])
 
     print('You should pair these people together this week:')
     for (name1, name2) in greatest_matching:
