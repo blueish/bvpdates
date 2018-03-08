@@ -24,7 +24,7 @@ def get_names_and_pairings():
 
     seen_names = {} #dict to validate the dataset to keep track of names we saw
 
-    with open('test4.csv') as f:
+    with open('test_dataset.csv') as f:
         reader = csv.DictReader(f, delimiter=',')
         for row in reader:
             name = row['Name']
