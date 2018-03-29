@@ -75,7 +75,7 @@ def main():
     G = nx.Graph();
 
     names_lenth = len(names);
-    unmatched_edge_weight = names_lenth * (names_lenth - 1)
+    unmatched_edge_weight = max_week * (max_week + 1)
 
     for name1 in names:
         for name2 in names:
