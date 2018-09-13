@@ -1,8 +1,9 @@
 import networkx as nx
 import csv
+import sys
 
 
-def get_names_and_pairings():
+def get_names_and_pairings(filename):
     """Generate a tuple of names and previous pairings from CSV
 
     Parameters:
@@ -17,14 +18,17 @@ def get_names_and_pairings():
         3. Each name that appears in the dataset is one of the names found
             in the 'Name' column
 
+    Returns:
+    -------
+    Tuple of (names, previous pairings, current week number)
     """
     previous_pairings = {}
     names = []
     max_week = 0
 
-    seen_names = {} #dict to validate the dataset to keep track of names we saw
+    seen_names = {} # keep track of names we've seen to validate
 
-    with open('test_dataset.csv') as f:
+    with open(filename) as f:
         reader = csv.DictReader(f, delimiter=',')
         for row in reader:
             name = row['Name']
@@ -52,7 +56,7 @@ def get_names_and_pairings():
         del seen_names[name]
 
     # we'll have 1 'unmatched' with the empty (missing) case if we're missing any
-    # historical data, so ignore it 
+    # historical data, so ignore it, otherwise warn about malformed data
     if len(seen_names) > 0 and not '' in seen_names:
         print('We found names that were not matched with labels. ',
               'Please validate your dataset!')
@@ -69,17 +73,21 @@ def order_pair(a, b):
     return (b,a)
 
 
-def main():
-    (names, previous_pairings, max_week) = get_names_and_pairings()
+def main(filename):
+    (names, previous_pairings, max_week) = get_names_and_pairings(filename)
 
     G = nx.Graph();
 
     names_lenth = len(names);
     unmatched_edge_weight = max_week * (max_week + 1)
 
+    # create matches for all names we have
+    # O(n^2), but we don't have a choice
     for name1 in names:
         for name2 in names:
+            # don't match the same people together!
             if not name1 == name2:
+                # We order here just to maintain our previous pairings
                 (n1, n2) = order_pair(name1, name2)
                 if ((n1, n2) in previous_pairings):
                     adjusted_weight = (max_week - previous_pairings[(n1, n2)]) ** 2
@@ -102,5 +110,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    filename = sys.argv[1]
+    main(filename)
 
