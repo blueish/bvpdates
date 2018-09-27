@@ -2,8 +2,8 @@ import networkx as nx
 import csv
 import sys
 
-
-def old_get_pairings(filename):
+# TODO: merge both this and creation of graph
+def new_get_pairings(filename):
     """Generate a tuple of names and previous pairings from CSV
 
     Parameters:
@@ -13,61 +13,15 @@ def old_get_pairings(filename):
     Assumptions:
     ------------
     The file is a well formatted CSV file, with the following properties:
-        1. The first column header is 'Name'
-        2. The column indexes are integers
+        1. The first column header is 'Week'
+        2. The column indexes are names (strings)
         3. Each name that appears in the dataset is one of the names found
-            in the 'Name' column
+            in the names columns
 
     Returns:
     -------
-    Tuple of (names, previous pairings, current week number)
+    Tuple of (sorted_names, previous pairings, current week number)
     """
-    previous_pairings = {}
-    names = []
-    max_week = 0
-
-    seen_names = {} # keep track of names we've seen to validate
-
-    with open(filename) as f:
-        reader = csv.DictReader(f, delimiter=',')
-        for row in reader:
-            name = row['Name']
-            name = name.strip().replace(' ', '').lower()
-            names.append(name)
-            seen_names[name] = True
-
-            for (week, pairing_name) in row.items():
-                pairing_name = pairing_name.strip().replace(' ', '').lower()
-
-                # skip, if it's the name key
-                if week != '' and not week == 'Name':
-                    week_number = int(week)
-                    if week_number > max_week:
-                        max_week = week_number
-
-                    ordered_names = order_pair(name, pairing_name)
-                    previous_pairings[ordered_names] = week_number
-
-                    if not pairing_name in names:
-                        seen_names[pairing_name] = week_number
-
-    # validate the names:
-    for name in names:
-        del seen_names[name]
-
-    # we'll have 1 'unmatched' with the empty (missing) case if we're missing any
-    # historical data, so ignore it, otherwise warn about malformed data
-    if len(seen_names) > 0 and not '' in seen_names:
-        print('We found names that were not matched with labels. ',
-              'Please validate your dataset!')
-        print('Names found were: ', seen_names)
-
-    return (names, previous_pairings, max_week)
-
-
-
-# TODO: merge both this and creation of graph
-def new_get_pairings(filename):
     previous_pairings = {}
     names = set()
     max_week = 0
@@ -83,6 +37,7 @@ def new_get_pairings(filename):
                 max_week = week
 
             for (a, b) in row.items():
+                # skip the week one
                 if 'Week' not in a:
                     # clean the names
                     a = a.strip().replace(' ', '').lower()
