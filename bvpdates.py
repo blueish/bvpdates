@@ -71,7 +71,7 @@ def old_get_pairings(filename):
 # TODO: merge both this and creation of graph
 def new_get_pairings(filename):
     previous_pairings = {}
-    names = []
+    names = set()
     max_week = 0
 
     seen_names = {} # keep track of names we've seen to validate
@@ -85,20 +85,24 @@ def new_get_pairings(filename):
             if week > max_week:
                 max_week = week
 
-            # name = name.strip().replace(' ', '').lower()
             for (a, b) in row.items():
-                # clean the names
-                a = a.strip().replace(' ', '').lower()
-                b = b.strip().replace(' ', '').lower()
-                if not a in names:
-                    seen_names[a] = week
-                if not b in names:
-                    seen_names[b] = week
+                if 'Week' not in a:
+                    # clean the names
+                    a = a.strip().replace(' ', '').lower()
+                    b = b.strip().replace(' ', '').lower()
+                    names.add(a)
+                    names.add(b)
+                    print('ab is', a, b)
+                    if not a in seen_names:
+                        seen_names[a] = b
+                    if not b in seen_names:
+                        seen_names[b] = a
 
-                # skip, if it's the name key
-                ordered_names = order_pair(a, b)
-                previous_pairings[ordered_names] = week
+                    # skip, if it's the name key
+                    ordered_names = order_pair(a, b)
+                    previous_pairings[ordered_names] = week
 
+    print(seen_names)
     # validate the names:
     for name in names:
         del seen_names[name]
@@ -151,6 +155,7 @@ def create_graph(names, previous_pairings, max_week):
                 if ((n1, n2) in previous_pairings):
                     adjusted_weight = (max_week - previous_pairings[(n1, n2)]) ** 2
                     G.add_edge(n1, n2, weight=adjusted_weight)
+                    print('added edge between ', n1, n2)
                 else:
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
@@ -158,6 +163,7 @@ def create_graph(names, previous_pairings, max_week):
 
 def main(filename):
     (names, previous_pairings, max_week) = new_get_pairings(filename)
+    print('names are: ', names)
 
     G = create_graph(names, previous_pairings, max_week)
 
