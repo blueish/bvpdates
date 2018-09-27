@@ -128,7 +128,10 @@ def append_csv(filename, names, new_week, name_pairings):
 
     with open(filename, 'a') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, lineterminator='\n', delimiter=',')
-        # writer.writeheader()
+        # TODO: change this to env flag
+        if (False):
+            writer.writeheader()
+
         new_row = {'Week': new_week }
         for (a, b) in name_pairings:
             new_row[a] = b
