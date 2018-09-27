@@ -3,7 +3,7 @@ import csv
 import sys
 
 
-def get_names_and_pairings(filename):
+def old_get_pairings(filename):
     """Generate a tuple of names and previous pairings from CSV
 
     Parameters:
@@ -30,7 +30,9 @@ def get_names_and_pairings(filename):
 
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=',')
+        print(reader)
         for row in reader:
+            print(row)
             name = row['Name']
             name = name.strip().replace(' ', '').lower()
             names.append(name)
@@ -66,6 +68,51 @@ def get_names_and_pairings(filename):
 
 
 
+# TODO: merge both this and creation of graph
+def new_get_pairings(filename):
+    previous_pairings = {}
+    names = []
+    max_week = 0
+
+    seen_names = {} # keep track of names we've seen to validate
+
+    with open(filename) as f:
+        reader = csv.DictReader(f, delimiter=',')
+        for row in reader:
+            print(row)
+            week = row['Week']
+            week = int(week)
+            if week > max_week:
+                max_week = week
+
+            # name = name.strip().replace(' ', '').lower()
+            for (a, b) in row.items():
+                # clean the names
+                a = a.strip().replace(' ', '').lower()
+                b = b.strip().replace(' ', '').lower()
+                if not a in names:
+                    seen_names[a] = week
+                if not b in names:
+                    seen_names[b] = week
+
+                # skip, if it's the name key
+                ordered_names = order_pair(a, b)
+                previous_pairings[ordered_names] = week
+
+    # validate the names:
+    for name in names:
+        del seen_names[name]
+
+    # we'll have 1 'unmatched' with the empty (missing) case if we're missing any
+    # historical data, so ignore it, otherwise warn about malformed data
+    if len(seen_names) > 0 and not '' in seen_names:
+        print('We found names that were not matched with labels. ',
+              'Please validate your dataset!')
+        print('Names found were: ', seen_names)
+
+    return (names, previous_pairings, max_week)
+    
+
 def order_pair(a, b):
     if (a < b):
         return (a, b)
@@ -73,12 +120,24 @@ def order_pair(a, b):
     return (b,a)
 
 
-def main(filename):
-    (names, previous_pairings, max_week) = get_names_and_pairings(filename)
+def append_csv(names, new_week, name_pairings):
+    new_filename = 'new_output.csv'
+    names.sort()
+    fieldnames = ['Week'] + names
 
+    with open(new_filename, 'w') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames, lineterminator='\n', delimiter=',')
+        writer.writeheader()
+        new_row = {'Week': new_week }
+        for (a, b) in name_pairings:
+            new_row[a] = b
+            new_row[b] = a
+
+        writer.writerow(new_row)
+
+def create_graph(names, previous_pairings, max_week):
     G = nx.Graph();
 
-    names_lenth = len(names);
     unmatched_edge_weight = max_week * (max_week + 1)
 
     # create matches for all names we have
@@ -95,6 +154,12 @@ def main(filename):
                 else:
                     G.add_edge(n1, n2, weight=unmatched_edge_weight)
 
+    return G
+
+def main(filename):
+    (names, previous_pairings, max_week) = new_get_pairings(filename)
+
+    G = create_graph(names, previous_pairings, max_week)
 
     greatest_matching = nx.algorithms.max_weight_matching(G, True)
 
@@ -106,6 +171,10 @@ def main(filename):
     print('You should pair these people together this week:')
     for (name1, name2) in greatest_matching:
         print(name1 + ', ' + name2)
+
+    print('writing pairs to new_output to pair...')
+    append_csv(names, max_week + 1 ,greatest_matching)
+    print('done')
 
 
 
