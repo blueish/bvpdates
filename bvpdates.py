@@ -179,7 +179,7 @@ def main(filename):
         print(name1 + ', ' + name2)
 
     print('writing pairs to new_output to pair...')
-    # append_csv(names, max_week + 1 ,greatest_matching)
+    append_csv(names, max_week + 1 ,greatest_matching)
     print('done')
 
 
