@@ -6,3 +6,9 @@ Originally created to help minimize manual work of pairing members, while keepin
 ### dependencies:
 networkx
 `pip install networkx`
+
+### Running:
+```bash
+python bvpdates.py <csv-file>
+```
+
