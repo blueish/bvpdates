@@ -28,11 +28,14 @@ def new_get_pairings(filename):
 
     seen_names = {} # keep track of names we've seen to validate
 
+
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=',')
+
+        # TODO: read the first row initially, parse out the header and names to actually write
         for row in reader:
             week = row['Week']
-            week = int(week)
+            week = float(week)
             if week > max_week:
                 max_week = week
 
@@ -43,11 +46,8 @@ def new_get_pairings(filename):
                     a = a.strip().replace(' ', '').lower()
                     b = b.strip().replace(' ', '').lower()
                     names.add(a)
-                    names.add(b)
                     if not a in seen_names:
                         seen_names[a] = b
-                    if not b in seen_names:
-                        seen_names[b] = a
 
                     # skip, if it's the name key
                     ordered_names = order_pair(a, b)
